@@ -15,6 +15,10 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Installing
 
+For an automated, interactive setup, run **`./install.sh`** from this directory. It installs the required packages (rtl-sdr, multimon-ng, sox, nodejs), stops the kernel DVB-T driver from claiming the dongle, fixes USB permissions, installs the Node dependencies, writes `config/config.json`, generates `reader.sh` for your device/frequency/protocol, and can install a systemd service to run the decoder on boot.
+
+To set it up manually instead:
+
 ```
 cd client
 npm install

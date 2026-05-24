@@ -1,4 +1,5 @@
 # TBA
+* Add interactive client installer (client/install.sh) automating rtl-sdr/multimon-ng/sox setup, DVB-driver blacklist, USB permissions, config, reader.sh and a systemd service
 * Document multimon-ng as a required client prerequisite in README
 * Fix PiBuilder @marshy #604
 
