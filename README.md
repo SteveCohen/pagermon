@@ -63,6 +63,40 @@ The UI is built around a Node/Express/Angular/Bootstrap stack, while the client 
 
 ![alias edit](http://i.imgur.com/gus8QTe.jpeg)
 
+## Quick start
+
+PagerMon is **two independent parts** that talk to each other over HTTP:
+
+* **Server** — the web UI, database and API. This is what the Docker image runs. It listens on port `3000` and **does not decode radio itself**.
+* **Decoder (client)** — `rtl_fm | multimon-ng | reader.js` running on a machine with an RTL-SDR dongle. It decodes pager messages and POSTs them to the server's API. This is **not** part of the Docker image — you run it on the host (or any box with the dongle).
+
+A typical setup (including a single Raspberry Pi running both) is:
+
+**1. Start the server with Docker.** See [docker-compose](#docker-compose) below for the compose file, then:
+
+```bash
+docker-compose up -d
+```
+
+The UI is now at `http://<host>:3000` (default login `admin` / `changeme`).
+
+**2. Create an API key.** Log in, go to **/admin → Settings**, and generate an API key — the decoder uses it to authenticate.
+
+**3. Set up the decoder.** On the machine with the RTL-SDR dongle, run the interactive installer:
+
+```bash
+cd pagermon/client
+./install.sh
+```
+
+It installs the decoder's dependencies (rtl-sdr, multimon-ng, sox, node modules), frees the dongle from the kernel DVB-T driver, fixes USB permissions, and prompts you for:
+
+* the **server URL** (use `http://127.0.0.1:3000` when the decoder runs on the same box as the container) and the **API key** from step 2,
+* your **device index, frequency and protocol** (used to generate `reader.sh`),
+* and, optionally, a **systemd service** so the decoder starts on boot.
+
+Decoded messages then appear in the web UI. The container (server) and the decoder are separate long-running services — the dongle can only be used by one decoder process at a time. For full manual details and all options, see [Running the server](#running-the-server) and [Running the client](#running-the-client).
+
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
@@ -224,6 +258,9 @@ To install the Prerequisites run
 > **Note:** `multimon-ng` is the decoder that turns the radio audio into pager messages — without it, `reader.js` gets no input and **no messages will reach the server**. It is packaged on current Debian/Ubuntu releases (installed by the command above). On older distributions where `apt` can't find the package, build it from source instead: https://github.com/EliasOenal/multimon-ng
 
 #### Installing Pagermon Client
+
+> **Tip:** For an automated, interactive setup, run `./install.sh` from the `client/` directory (see [Quick start](#quick-start)). It performs the steps below and also handles the SDR kernel driver, USB permissions and an optional systemd service. The manual steps follow.
+
 Run the following commands from Terminal:
 ```
 git clone https://github.com/pagermon/pagermon.git
