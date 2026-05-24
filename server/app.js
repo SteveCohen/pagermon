@@ -161,7 +161,7 @@ var sessSet = {
     secret: secret
 }
 
-if (process.env.HOSTNAME && process.env.USE_COOKIE_HOST)
+if (process.env.HOSTNAME && process.env.USE_COOKIE_HOST === 'true')
     sessSet.cookie.domain = '.'+process.env.HOSTNAME;
 
 app.use(session(sessSet));
