@@ -213,7 +213,7 @@ docker-compose up -d
 |:-------:|:-------|
 | `-e APP_NAME=<name>` | Application name |
 | `-e HOSTNAME=<hostname>` | Hostname |
-| `-e USE_COOKIE_HOST=true` | Use cookie host. |
+| `-e USE_COOKIE_HOST=true` | Scope the session cookie to `.<HOSTNAME>`. Must be set to exactly `true` to enable; any other value (or unset) leaves the cookie host-only. Leave disabled for `localhost`. |
 | `-e NO_CHOWN=true`| Disable fixing permissions. |
 | `-e PUID=1000` | for UserID |
 | `-e PGID=1000` | for GroupID |
@@ -232,6 +232,7 @@ docker-compose up -d
 - To shutdown and remove the container (if using compose), run `docker-compose down`
 - If you make changes to the app for testing, you will need to re-build the image, run `docker-compose down && docker-compose up --build`
 - To run on *Raspberry Pi* use **armhf** variant (add `-armhf` at the end of version), but **be aware** that OracleDB does not work there.
+- **Login fix:** `USE_COOKIE_HOST` is now only honoured when set to exactly `true`. Previously the value was read as a string and treated as always-on, so even `USE_COOKIE_HOST=false` scoped the session cookie to `.localhost` — a domain browsers reject — which silently broke login on default/Docker installs (after entering valid credentials you were returned to the main page). See [#486](https://github.com/pagermon/pagermon/issues/486).
 
 See [additional parameters](https://github.com/SloCompTech/docker-baseimage).
 
