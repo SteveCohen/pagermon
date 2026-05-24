@@ -1,4 +1,5 @@
 # TBA
+* Document multimon-ng as a required client prerequisite in README
 * Fix PiBuilder @marshy #604
 
 # 0.3.13 - 2023-09-04

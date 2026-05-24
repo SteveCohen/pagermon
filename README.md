@@ -213,12 +213,15 @@ These programs/libraries are required for Pagermon Client to work
 
 * [RTL-SDR](https://www.rtl-sdr.com/rtl-sdr-quick-start-guide/) - RTL-SDR tools/libraries to access RTL-SDR dongle
 * [RTL-SDR dongle](https://www.rtl-sdr.com/buy-rtl-sdr-dvb-t-dongles/)  - You can get these from Ebay, Amazon or other stores (Has to have RTL2832U chip)
+* [multimon-ng](https://github.com/EliasOenal/multimon-ng) - Decodes the radio audio from rtl_fm into pager messages (POCSAG / FLEX / EAS)
 * [nodejs](https://nodejs.org/en/) - JavaScript Programming Language (Only if installing separate from server)
 * [npm](https://www.npmjs.com/) - Javascript Package Manager (Only if installing separate from server)
 * [Git Client](https://git-scm.com/) - Github.com client for getting source code (Only if installing separate from server) 
 
 To install the Prerequisites run
-`sudo apt install nodejs npm git rtl-sdr`
+`sudo apt install nodejs npm git rtl-sdr multimon-ng`
+
+> **Note:** `multimon-ng` is the decoder that turns the radio audio into pager messages — without it, `reader.js` gets no input and **no messages will reach the server**. It is packaged on current Debian/Ubuntu releases (installed by the command above). On older distributions where `apt` can't find the package, build it from source instead: https://github.com/EliasOenal/multimon-ng
 
 #### Installing Pagermon Client
 Run the following commands from Terminal:
