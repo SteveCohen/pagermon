@@ -1,4 +1,5 @@
 # TBA
+* Speed up `POST /api/capcodeRefresh` by walking capcodes most-specific-first and running per-capcode UPDATEs inside a transaction, so each match can use the existing `messages.address` index instead of an unindexable correlated `LIKE` join
 * Add interactive client installer (client/install.sh) automating rtl-sdr/multimon-ng/sox setup, DVB-driver blacklist, USB permissions, config, reader.sh and a systemd service, plus a Docker + decoder quick-start in the README
 * Document multimon-ng as a required client prerequisite in README
 * Fix PiBuilder @marshy #604

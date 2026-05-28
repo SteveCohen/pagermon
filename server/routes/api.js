@@ -1047,28 +1047,46 @@ router.route('/capcodeRefresh')
     nconf.load();
     var dbtype = nconf.get('database:type');
     console.time('updateMap');
-    db('messages').update('alias_id', function () {
-      this.select('id')
-        .from('capcodes')
-        .where(db.ref('messages.address'), 'like', db.ref('capcodes.address'))
-        .modify(function (queryBuilder) {
+    // Walk capcodes most-specific-first; per-capcode UPDATEs can use the
+    // messages.address index because each LIKE pattern has a literal prefix,
+    // whereas a single UPDATE with a correlated subquery joining via
+    // `messages.address LIKE capcodes.address` cannot use any index.
+    db.transaction(function (trx) {
+      return trx('capcodes')
+        .select('id', 'address')
+        .modify(function (qb) {
           if (dbtype == 'oracledb')
-            queryBuilder.orderByRaw(`REPLACE("address", '_', '%') DESC`);
+            qb.orderByRaw(`REPLACE("address", '_', '%') DESC`);
           else
-            queryBuilder.orderByRaw(`REPLACE(address, '_', '%') DESC`)
+            qb.orderByRaw(`REPLACE(address, '_', '%') DESC`);
         })
-        .limit(1)
+        .then(function (capcodes) {
+          // NULL first + whereNull below means each message is claimed by the
+          // most-specific capcode that matches it; later (wildcard) capcodes
+          // skip rows already claimed.
+          return trx('messages').update('alias_id', null).then(function () {
+            return capcodes.reduce(function (p, cc) {
+              return p.then(function () {
+                return trx('messages')
+                  .where('address', 'like', cc.address)
+                  .whereNull('alias_id')
+                  .update('alias_id', cc.id);
+              });
+            }, Promise.resolve());
+          });
+        });
     })
-      .then((result) => {
+      .then(function () {
         console.timeEnd('updateMap');
         nconf.set('database:aliasRefreshRequired', 0);
         nconf.save();
         res.status(200).send({ 'status': 'ok' });
       })
-      .catch((err) => {
+      .catch(function (err) {
         logger.main.error(err);
         console.timeEnd('updateMap');
-      })
+        return next(err);
+      });
   });
 
 router.route('/capcodeExport')

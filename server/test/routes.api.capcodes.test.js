@@ -720,6 +720,73 @@ describe('POST /api/capcodeRefresh', () => {
                 done();
             });
     });
+    it('should prefer specific capcodes over overlapping wildcards', done => {
+        // Add a wildcard that matches all four seeded message addresses
+        // (1234567, 1234568, 1234569, 1234570) — refresh must still assign
+        // each message to its more-specific capcode, not the wildcard.
+        db('capcodes').insert({
+            address: '123456_',
+            alias: 'Wildcard',
+            agency: 'WILD',
+            icon: '',
+            color: '',
+            ignore: 0,
+        }).then(wildcardIds => {
+            const wildcardId = wildcardIds[0];
+            chai.request(server)
+                .post('/api/capcodeRefresh')
+                .set('apikey', 'reallylongkeythatneedstobechanged')
+                .end((err, res) => {
+                    res.status.should.eql(200);
+                    db('messages')
+                        .join('capcodes', 'capcodes.id', 'messages.alias_id')
+                        .select('messages.address', 'capcodes.address as ccAddress')
+                        .then(rows => {
+                            rows.length.should.be.greaterThan(0);
+                            rows.forEach(r => {
+                                r.ccAddress.should.eql(r.address);
+                                r.ccAddress.should.not.eql('123456_');
+                            });
+                            // Wildcard exists but claims no messages, since
+                            // every message already matches a specific capcode.
+                            db('messages').where('alias_id', wildcardId).then(matched => {
+                                matched.length.should.eql(0);
+                                done();
+                            });
+                        });
+                });
+        });
+    });
+    it('should claim messages with a wildcard when no specific capcode exists', done => {
+        // Remove the specific capcodes and add only a wildcard that matches
+        // every seeded message address (1234567-1234570 are all 7 chars
+        // starting with '12345'); every message should end up claimed.
+        db('capcodes').del().then(() => {
+            db('capcodes').insert({
+                address: '12345__',
+                alias: 'Wildcard',
+                agency: 'WILD',
+                icon: '',
+                color: '',
+                ignore: 0,
+            }).then(wildcardIds => {
+                const wildcardId = wildcardIds[0];
+                chai.request(server)
+                    .post('/api/capcodeRefresh')
+                    .set('apikey', 'reallylongkeythatneedstobechanged')
+                    .end((err, res) => {
+                        res.status.should.eql(200);
+                        db('messages').then(messages => {
+                            messages.length.should.be.greaterThan(0);
+                            messages.forEach(m => {
+                                m.alias_id.should.eql(wildcardId);
+                            });
+                            done();
+                        });
+                    });
+            });
+        });
+    });
 });
 
 describe('POST /api/capcodeExport', () => {
